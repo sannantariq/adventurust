@@ -37,9 +37,13 @@ fn main() {
             let move_nums: Vec<usize> = line.split(" ").filter_map(|n| n.parse().ok()).collect();
             assert_eq!(move_nums.len(), 3);
             let [a, b, c] = move_nums[..3] else {panic!("Not the right number of moves")};
+            let mut buffer = vec![];
             for _ in 0..a {
                 let val = stacks[b - 1].pop_back().unwrap();
-                stacks[c - 1].push_back(val);
+                buffer.push(val);
+            }
+            while buffer.len() > 0 {
+                stacks[c - 1].push_back(buffer.pop().unwrap());
             }
         }
     }
