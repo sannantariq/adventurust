@@ -1,26 +1,49 @@
+use std::collections::VecDeque;
 use std::io::{self, BufRead};
 
 fn main() {
-    let mut count = 0u64;
+    let mut stacks: Vec<VecDeque<char>> = vec![];
+    let mut init = false;
+    let mut broken = false;
+
     for line in io::stdin().lock().lines() {
         let line = line.unwrap();
 
-        let res: Vec<u64> = line
-            .split(",")
-            .flat_map(|s| s.split("-"))
-            .filter_map(|n| n.parse().ok())
-            .collect();
+        if !broken {
+            if line.len() == 0 {
+                broken = true
+            }
+            if !init {
+                let stack_count = (line.len() + 1) / 4;
+                for _ in 0..stack_count {
+                    stacks.push(VecDeque::new());
+                }
+                init = true;
+            }
 
-        assert_eq!(4, res.len());
+            let mut prev_is_open = false;
 
-        let _ = match res[..] {
-            [a, b, x, y] => {
-                if !((b < x) || (y < a)) {
-                    count += 1;
+            for (index, c) in line.char_indices() {
+                if prev_is_open {
+                    stacks[(index - 1) / 4].push_front(c);
+                    prev_is_open = false;
+                } else if c == '[' {
+                    prev_is_open = true
+                } else {
+                    prev_is_open = false;
                 }
             }
-            _ => unreachable!(),
-        };
+        } else {
+            let move_nums: Vec<usize> = line.split(" ").filter_map(|n| n.parse().ok()).collect();
+            assert_eq!(move_nums.len(), 3);
+            let [a, b, c] = move_nums[..3] else {panic!("Not the right number of moves")};
+            for _ in 0..a {
+                let val = stacks[b - 1].pop_back().unwrap();
+                stacks[c - 1].push_back(val);
+            }
+        }
     }
-    println!("Total Covered Assignemnts: {:?}", count);
+    let res: Vec<_> = stacks.iter().filter_map(|v| v.back()).collect();
+    let res: String = res.into_iter().collect();
+    println!("{:?}", res);
 }
