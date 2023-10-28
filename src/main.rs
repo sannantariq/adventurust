@@ -44,7 +44,7 @@ impl CharCounter {
 
 fn main() {
     let mut counter = CharCounter::new();
-    let maxlen = 4usize;
+    let maxlen = 14usize;
     for line in io::stdin().lock().lines() {
         let line = line.unwrap();
 
