@@ -15,7 +15,7 @@ fn main() {
 
         let _ = match res[..] {
             [a, b, x, y] => {
-                if ((a <= x) && (b >= y)) || ((x <= a) && (y >= b)) {
+                if !((b < x) || (y < a)) {
                     count += 1;
                 }
             }
