@@ -1,53 +1,64 @@
-use std::collections::VecDeque;
-use std::io::{self, BufRead};
+use std::{
+    collections::VecDeque,
+    io::{self, BufRead},
+};
+
+#[derive(Debug)]
+struct CharCounter {
+    counts: [usize; 26],
+}
+
+impl CharCounter {
+    fn new() -> Self {
+        Self {
+            counts: [0usize; 26],
+        }
+    }
+
+    // fn len(&self) -> usize {
+    //     self.counts.iter().fold(0, |v, w| v + w)
+    // }
+
+    fn is_unique(&self) -> bool {
+        self.counts
+            .iter()
+            .map(|&n| n <= 1)
+            .fold(true, |v, w| v && w)
+    }
+
+    fn add(&mut self, c: char) {
+        let idx = (c as usize) - ('a' as usize);
+        self.counts[idx] += 1;
+    }
+
+    fn remove(&mut self, c: char) -> Result<(), Box<dyn std::error::Error>> {
+        let idx = (c as usize) - ('a' as usize);
+        if self.counts[idx] == 0 {
+            return Err("This character does not exist".into());
+        } else {
+            self.counts[idx] -= 1;
+            Ok(())
+        }
+    }
+}
 
 fn main() {
-    let mut stacks: Vec<VecDeque<char>> = vec![];
-    let mut init = false;
-    let mut broken = false;
-
+    let mut counter = CharCounter::new();
+    let maxlen = 4usize;
     for line in io::stdin().lock().lines() {
         let line = line.unwrap();
 
-        if !broken {
-            if line.len() == 0 {
-                broken = true
+        let mut buf: VecDeque<char> = VecDeque::new();
+        for (idx, c) in line.char_indices() {
+            counter.add(c);
+            buf.push_back(c);
+            if buf.len() > maxlen {
+                counter.remove(buf.pop_front().unwrap()).unwrap();
             }
-            if !init {
-                let stack_count = (line.len() + 1) / 4;
-                for _ in 0..stack_count {
-                    stacks.push(VecDeque::new());
-                }
-                init = true;
-            }
-
-            let mut prev_is_open = false;
-
-            for (index, c) in line.char_indices() {
-                if prev_is_open {
-                    stacks[(index - 1) / 4].push_front(c);
-                    prev_is_open = false;
-                } else if c == '[' {
-                    prev_is_open = true
-                } else {
-                    prev_is_open = false;
-                }
-            }
-        } else {
-            let move_nums: Vec<usize> = line.split(" ").filter_map(|n| n.parse().ok()).collect();
-            assert_eq!(move_nums.len(), 3);
-            let [a, b, c] = move_nums[..3] else {panic!("Not the right number of moves")};
-            let mut buffer = vec![];
-            for _ in 0..a {
-                let val = stacks[b - 1].pop_back().unwrap();
-                buffer.push(val);
-            }
-            while buffer.len() > 0 {
-                stacks[c - 1].push_back(buffer.pop().unwrap());
+            if buf.len() == maxlen && counter.is_unique() {
+                println!("Found unique sequence ending at index: {}", idx);
+                return;
             }
         }
     }
-    let res: Vec<_> = stacks.iter().filter_map(|v| v.back()).collect();
-    let res: String = res.into_iter().collect();
-    println!("{:?}", res);
 }
